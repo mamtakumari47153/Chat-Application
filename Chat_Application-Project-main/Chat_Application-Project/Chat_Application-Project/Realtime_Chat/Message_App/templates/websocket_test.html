@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>WebSocket Chat Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #messages { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; margin-bottom: 10px; }
+    input[type="text"] { width: 300px; padding: 5px; }
+    button { padding: 5px 10px; }
+  </style>
+</head>
+<body>
+  <h2>Simple WebSocket Chat (Test UI)</h2>
+
+  <div>
+    <label>Room Name: <input type="text" id="room" placeholder="e.g., testroom"></label>
+    <button onclick="connectSocket()">Connect</button>
+  </div>
+
+  <div id="messages"></div>
+
+  <input type="text" id="messageInput" placeholder="Type a message...">
+  <button onclick="sendMessage()">Send</button>
+
+  <script>
+    let socket;
+
+    function connectSocket() {
+      const room = document.getElementById('room').value;
+      const wsUrl = `ws://127.0.0.1:8000/ws/chat/${room}/`;
+      socket = new WebSocket(wsUrl);
+
+      socket.onopen = function () {
+        appendMessage("Connected to: " + wsUrl);
+      };
+
+      socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        appendMessage("Received: " + data.message);
+      };
+
+      socket.onclose = function () {
+        appendMessage("Disconnected from server.");
+      };
+
+      socket.onerror = function (error) {
+        appendMessage("WebSocket Error: " + error);
+      };
+    }
+
+    function sendMessage() {
+      const message = document.getElementById('messageInput').value;
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ message: message }));
+        appendMessage("Sent: " + message);
+        document.getElementById('messageInput').value = "";
+      } else {
+        alert("Socket not connected.");
+      }
+    }
+
+    function appendMessage(msg) {
+      const box = document.getElementById('messages');
+      const p = document.createElement('p');
+      p.textContent = msg;
+      box.appendChild(p);
+      box.scrollTop = box.scrollHeight;
+    }
+  </script>
+</body>
+</html>
